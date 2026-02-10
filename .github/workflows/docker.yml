@@ -1,0 +1,37 @@
+name: Build Docker Image
+
+on:
+  push:
+    # Changed 'master' to 'main' (and kept master just in case)
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- 🏙️ ANTIGRAVITY OPTIMIZATION GATE START ---
+      - name: Antigravity Optimization Gate
+        env:
+          USE_OPTIMIZED: 'true' 
+          OPTIMIZER_SERVER: 'http://localhost:8000/api'
+        run: |
+          # 1. Download the tool from YOUR repo
+          curl -sSL https://raw.githubusercontent.com/codeayush004/version2/main/container-optimizer/bin/optimizer-cli.py -o optimizer-cli.py
+          
+          # 2. Optimization Logic
+          if [ "$USE_OPTIMIZED" = "true" ]; then
+            echo "✅ Permission Granted: Swapping with Optimized Dockerfile"
+            python3 optimizer-cli.py --file Dockerfile --server "$OPTIMIZER_SERVER" --apply
+          else
+            echo "🐢 Using Original Dockerfile (Scanning for Criticals only)"
+            python3 optimizer-cli.py --file Dockerfile --server "$OPTIMIZER_SERVER" --fail-on CRITICAL
+          fi
+      # --- 🏙️ ANTIGRAVITY OPTIMIZATION GATE END ---
+
+      - name: Build Docker image
+        run: |
+          docker build . -t bad-docker-app
