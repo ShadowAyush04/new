@@ -1,15 +1,15 @@
-FROM node:latest
-
+# syntax=docker/dockerfile:1
+FROM node:20-slim AS builder
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . ./
 
-# ❌ copies everything (no .dockerignore)
-COPY . .
-
-# ❌ runs as root
-# ❌ installs deps after copying full source (cache killer)
-RUN npm install
-
-# ❌ no healthcheck
-# ❌ shell form CMD (PID 1 issue)
+FROM node:20-slim
+WORKDIR /app
+COPY --from=builder /app ./
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 EXPOSE 3000
-CMD node app.js
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s CMD curl -f http://localhost:3000/health || exit 1
+USER node
+CMD ["node","app.js"]
