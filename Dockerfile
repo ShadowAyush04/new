@@ -1,28 +1,17 @@
-# 1. Use a massive base image instead of slim or alpine
-FROM ubuntu:latest
-
-# 2. Run as root for maximum security risk
-USER root
-
-# 3. Separate RUN commands for every single tool 
-# (This creates massive, redundant layers)
-RUN apt-get update
-RUN apt-get install -y nodejs
-RUN apt-get install -y npm
-RUN apt-get install -y curl
-# Note: No cleanup of /var/lib/apt/lists/ adds 30MB+ of junk data
-
+# ---------- Builder ----------
+FROM node:20.20-slim AS builder
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
 
-# 4. Copy everything before installing dependencies
-# This "cache busts" immediately—any code change forces a full reinstall
+# ---------- Final ----------
+FROM node:20.20-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app/node_modules ./node_modules
 COPY . .
-
-# 5. Use 'npm install' instead of 'npm ci' and include devDependencies
-RUN npm install
-
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser && chown -R appuser:appgroup /app
+USER appuser
 EXPOSE 3000
-
-# 6. No multi-stage build: Final image contains build tools, caches, and source code
-CMD ["node", "app.js"]
-
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD curl -f http://localhost:3000/ || exit 1
+CMD ["node","app.js"]
