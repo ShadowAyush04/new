@@ -1,20 +1,31 @@
 name: Build Docker Image (Cloud)
+
 on:
   push:
     branches: [ "main", "master" ]
+
 jobs:
   build:
     runs-on: ubuntu-latest # ☁️ Uses GitHub's cloud machine
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Antigravity Optimization Gate
         env:
-          USE_OPTIMIZED: 'true' 
-          # 🚀 Points to your LIVE Azure App
           OPTIMIZER_SERVER: 'https://app-optimizer-v11-1770717070.azurewebsites.net/api'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           curl -sSL https://raw.githubusercontent.com/codeayush004/version2/main/container-optimizer/bin/optimizer-cli.py -o optimizer-cli.py
-          python3 optimizer-cli.py --file Dockerfile --server "$OPTIMIZER_SERVER" --apply
+          
+          # Switched --apply to --create-pr for interactive choice!
+          python3 optimizer-cli.py \
+            --file Dockerfile \
+            --server "$OPTIMIZER_SERVER" \
+            --create-pr \
+            --repo-url "https://github.com/${{ github.repository }}" \
+            --github-token "$GH_TOKEN"
+            
       - name: Build Docker image
         run: docker build . -t bad-docker-app
