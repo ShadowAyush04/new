@@ -1,15 +1,17 @@
-FROM node:latest
-
+# ---------- Builder ----------
+FROM node:20.20-slim AS builder
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
 
-# ❌ copies everything (no .dockerignore)
+# ---------- Final ----------
+FROM node:20.20-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app/node_modules ./node_modules
 COPY . .
-
-# ❌ runs as root
-# ❌ installs deps after copying full source (cache killer)
-RUN npm install
-
-# ❌ no healthcheck
-# ❌ shell form CMD (PID 1 issue)
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser && chown -R appuser:appgroup /app
+USER appuser
 EXPOSE 3000
-CMD node app.js
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD curl -f http://localhost:3000/ || exit 1
+CMD ["node","app.js"]
