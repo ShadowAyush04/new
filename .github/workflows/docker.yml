@@ -1,18 +1,16 @@
-name: Build Docker Image (Cloud)
+name: Build Docker Image (Consent Flow)
 
 on:
   push:
     branches: [ "main", "master" ]
 
-# 🚀 ADDED: Required permissions for the token to create PRs
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
   build:
-    runs-on: ubuntu-latest # ☁️ Uses GitHub's cloud machine
-
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,9 +20,11 @@ jobs:
           OPTIMIZER_SERVER: 'https://app-optimizer-v11-1770717070.azurewebsites.net/api'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # 1. Download Latest Tool
           curl -sSL https://raw.githubusercontent.com/codeayush004/version2/main/container-optimizer/bin/optimizer-cli.py -o optimizer-cli.py
           
-          # Switched --apply to --create-pr for interactive choice!
+          # 2. RUN WITH CONSENT (PR) MODE
+          # This will now print exactly why it is (or isn't) creating a PR
           python3 optimizer-cli.py \
             --file Dockerfile \
             --server "$OPTIMIZER_SERVER" \
