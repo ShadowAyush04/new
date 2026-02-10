@@ -1,37 +1,20 @@
-name: Build Docker Image
-
+name: Build Docker Image (Cloud)
 on:
   push:
-    # Changed 'master' to 'main' (and kept master just in case)
     branches: [ "main", "master" ]
-
 jobs:
   build:
-    runs-on: self-hosted
-
+    runs-on: ubuntu-latest # ☁️ Uses GitHub's cloud machine
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # --- 🏙️ ANTIGRAVITY OPTIMIZATION GATE START ---
       - name: Antigravity Optimization Gate
         env:
           USE_OPTIMIZED: 'true' 
-          OPTIMIZER_SERVER: 'http://localhost:8000/api'
+          # 🚀 Points to your LIVE Azure App
+          OPTIMIZER_SERVER: 'https://app-optimizer-v11-1770717070.azurewebsites.net/api'
         run: |
-          # 1. Download the tool from YOUR repo
           curl -sSL https://raw.githubusercontent.com/codeayush004/version2/main/container-optimizer/bin/optimizer-cli.py -o optimizer-cli.py
-          
-          # 2. Optimization Logic
-          if [ "$USE_OPTIMIZED" = "true" ]; then
-            echo "✅ Permission Granted: Swapping with Optimized Dockerfile"
-            python3 optimizer-cli.py --file Dockerfile --server "$OPTIMIZER_SERVER" --apply
-          else
-            echo "🐢 Using Original Dockerfile (Scanning for Criticals only)"
-            python3 optimizer-cli.py --file Dockerfile --server "$OPTIMIZER_SERVER" --fail-on CRITICAL
-          fi
-      # --- 🏙️ ANTIGRAVITY OPTIMIZATION GATE END ---
-
+          python3 optimizer-cli.py --file Dockerfile --server "$OPTIMIZER_SERVER" --apply
       - name: Build Docker image
-        run: |
-          docker build . -t bad-docker-app
+        run: docker build . -t bad-docker-app
