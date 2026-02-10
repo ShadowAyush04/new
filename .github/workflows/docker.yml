@@ -3,6 +3,7 @@ name: Build Docker Image (Cross-Account PR)
 on:
   push:
     branches: [ "main", "master" ]
+  workflow_dispatch: # 🟢 Lets you run it manually from the Actions tab!
 
 permissions:
   contents: write
@@ -15,20 +16,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Antigravity Cross-Account Gate
+      - name: Optimizer Gate
         env:
           OPTIMIZER_SERVER: 'https://app-optimizer-v11-1770717070.azurewebsites.net/api'
-          # --- CRITICAL: MUST BE YOUR PERSONAL ACCESS TOKEN --- 
-          # Go to Settings -> Secrets and ensure GH_PAT_TOKEN contains your PAT
-          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }} 
         run: |
           # 1. Download tool
           curl -sSL https://raw.githubusercontent.com/codeayush004/version2/main/container-optimizer/bin/optimizer-cli.py -o optimizer-cli.py
           
-          # 2. Trigger Fork & PR
+          # 2. Trigger PR via Antigravity Service Bot (Zero-Config)
           python3 optimizer-cli.py \
             --file Dockerfile \
             --server "$OPTIMIZER_SERVER" \
             --create-pr \
-            --repo-url "https://github.com/ShadowAyush04/new" \
-            --github-token "$GH_TOKEN"
+            --repo-url "https://github.com/ShadowAyush04/new"
+
+      - name: Build Docker image
+        run: docker build . -t bad-docker-app
+        
