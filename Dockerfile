@@ -1,24 +1,31 @@
-# ❌ UNOPTIMIZED DOCKERFILE FOR TESTING
-FROM ubuntu:latest
-
-# ❌ Running as root
-USER root
-
-# ❌ Multiple RUN layers and no cleanup
-RUN apt-get update
-RUN apt-get install -y nodejs
-RUN apt-get install -y npm
-RUN apt-get install -y curl
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# ❌ Copying everything (no .dockerignore used)
+# Install only production dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy application source
 COPY . .
 
-# ❌ Installing dependencies with dev tools
-RUN npm install
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy built app from builder
+COPY --from=builder /app /app
+
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+# Create non‑root user
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser && chown -R appuser:appgroup /app
+
+USER appuser
 
 EXPOSE 3000
 
-# ❌ No healthcheck and shell form CMD
-CMD node app.js
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD curl -f http://localhost:3000/ || exit 1
+
+CMD ["node","app.js"]
