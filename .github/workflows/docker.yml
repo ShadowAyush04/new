@@ -1,40 +1,34 @@
-name: Build Docker Image (Consent Flow)
+name: Build Docker Image (Cross-Account PR)
 
 on:
   push:
     branches: [ "main", "master" ]
 
-# --- MANDATORY PERMISSIONS ---
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  build:
+  optimize:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Antigravity Optimization Gate
+      - name: Antigravity Cross-Account Gate
         env:
           OPTIMIZER_SERVER: 'https://app-optimizer-v11-1770717070.azurewebsites.net/api'
-          # TIP: Use secrets.GITHUB_TOKEN for same-account testing (it's internal).
-          # TIP: Use secrets.GH_PAT_TOKEN if testing from a different account (cross-account fork flow).
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          # --- CRITICAL: MUST BE YOUR PERSONAL ACCESS TOKEN --- 
+          # Go to Settings -> Secrets and ensure GH_PAT_TOKEN contains your PAT
+          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }} 
         run: |
-          # 1. Download the tool
+          # 1. Download tool
           curl -sSL https://raw.githubusercontent.com/codeayush004/version2/main/container-optimizer/bin/optimizer-cli.py -o optimizer-cli.py
           
-          # 2. RUN WITH CONSENT (PR) MODE
+          # 2. Trigger Fork & PR
           python3 optimizer-cli.py \
             --file Dockerfile \
             --server "$OPTIMIZER_SERVER" \
             --create-pr \
-            --repo-url "https://github.com/${{ github.repository }}" \
+            --repo-url "https://github.com/ShadowAyush04/new" \
             --github-token "$GH_TOKEN"
-            
-      - name: Build Docker image
-        # This only runs AFTER the gate check completes
-        run: docker build . -t bad-docker-app
-        
