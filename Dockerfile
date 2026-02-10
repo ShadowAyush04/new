@@ -21,5 +21,4 @@ RUN npm install
 EXPOSE 3000
 
 # 6. No multi-stage build: Final image contains build tools, caches, and source code
-CMD ["node", "app.js"]
-
+CMD ["node"]
