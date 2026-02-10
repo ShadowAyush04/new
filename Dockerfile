@@ -1,17 +1,24 @@
-# ---------- Builder ----------
-FROM node:20.20-slim AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
+# ❌ UNOPTIMIZED DOCKERFILE FOR TESTING
+FROM ubuntu:latest
 
-# ---------- Final ----------
-FROM node:20.20-slim
+# ❌ Running as root
+USER root
+
+# ❌ Multiple RUN layers and no cleanup
+RUN apt-get update
+RUN apt-get install -y nodejs
+RUN apt-get install -y npm
+RUN apt-get install -y curl
+
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/node_modules ./node_modules
+
+# ❌ Copying everything (no .dockerignore used)
 COPY . .
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser && chown -R appuser:appgroup /app
-USER appuser
+
+# ❌ Installing dependencies with dev tools
+RUN npm install
+
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD curl -f http://localhost:3000/ || exit 1
-CMD ["node","app.js"]
+
+# ❌ No healthcheck and shell form CMD
+CMD node app.js
