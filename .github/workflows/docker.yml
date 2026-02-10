@@ -37,4 +37,3 @@ jobs:
       - name: Build Docker image
         # This only runs AFTER the gate check completes
         run: docker build . -t bad-docker-app
-        
