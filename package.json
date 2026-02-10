@@ -1,0 +1,12 @@
+{
+  "name": "bad-docker-app",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "dev": "node app.js",
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
